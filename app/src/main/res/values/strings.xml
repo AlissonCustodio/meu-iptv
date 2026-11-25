@@ -18,4 +18,6 @@
     <string name="remove_list_q">Remover \"%1$s\"?</string>
     <string name="channel_info">%1$d/%2$d  %3$s\n%4$s</string>
     <string name="channel_error">Canal indisponível no momento\n(%1$s)\n\n▲ ▼ para trocar de canal</string>
+    <string name="geo_off">🌐 Bloqueados por região: mostrando</string>
+    <string name="geo_on">🚫 Bloqueados por região: ocultos</string>
 </resources>
