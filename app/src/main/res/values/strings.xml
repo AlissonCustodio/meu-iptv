@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Meu IPTV</string>
+    <string name="groups">Categorias</string>
+    <string name="search">Buscar canal…</string>
+    <string name="loading">Carregando lista…</string>
+    <string name="load_error">Não foi possível carregar a lista: %1$s</string>
+    <string name="channel_count">%1$d canais · OK assiste · segure OK para favoritar</string>
+    <string name="no_favorites">Nenhum favorito ainda. Segure OK em um canal para adicioná-lo.</string>
+    <string name="fav_added">★ %1$s adicionado aos favoritos</string>
+    <string name="fav_removed">%1$s removido dos favoritos</string>
+    <string name="add_list">Adicionar lista M3U</string>
+    <string name="list_name">Nome da lista</string>
+    <string name="invalid_url">O link precisa começar com http:// ou https://</string>
+    <string name="save">Salvar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="remove">Remover</string>
+    <string name="remove_list_q">Remover \"%1$s\"?</string>
+    <string name="channel_info">%1$d/%2$d  %3$s\n%4$s</string>
+    <string name="channel_error">Canal indisponível no momento\n(%1$s)\n\n▲ ▼ para trocar de canal</string>
+</resources>
