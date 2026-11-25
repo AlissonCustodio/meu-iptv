@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var repo: PlaylistRepository
     private lateinit var favorites: Favorites
     private lateinit var customSources: CustomSources
+    private lateinit var settings: Settings
 
     private lateinit var sourceAdapter: TextAdapter
     private lateinit var groupAdapter: TextAdapter
@@ -52,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         repo = PlaylistRepository(this)
         favorites = Favorites(this)
         customSources = CustomSources(this)
+        settings = Settings(this)
 
         status = findViewById(R.id.status)
         titleView = findViewById(R.id.title)
@@ -94,19 +96,28 @@ class MainActivity : AppCompatActivity() {
     // ---------- Listas (fontes) ----------
 
     private fun rebuildSources() {
-        sources = listOf(PlaylistSource("⭐ Favoritos", Sources.FAVORITES)) +
+        val geo = getString(if (settings.hideGeoBlocked) R.string.geo_on else R.string.geo_off)
+        sources = listOf(PlaylistSource("⭐ Favoritos", special = Special.FAVORITES)) +
             Sources.defaults +
             customSources.all() +
-            PlaylistSource("➕ Adicionar lista M3U", Sources.ADD)
+            PlaylistSource("➕ Adicionar lista M3U", special = Special.ADD) +
+            PlaylistSource(geo, special = Special.TOGGLE_GEO)
         sourceAdapter.items = sources.map { it.title }
         sourceAdapter.selected = currentSource
     }
 
     private fun onSourceClick(index: Int) {
         val src = sources[index]
-        if (src.url == Sources.ADD) {
-            showAddDialog()
-            return
+        when (src.special) {
+            Special.ADD -> { showAddDialog(); return }
+            Special.TOGGLE_GEO -> {
+                settings.hideGeoBlocked = !settings.hideGeoBlocked
+                rebuildSources()
+                // Recarrega a lista aberta já com o novo filtro (usa o cache, é rápido).
+                sources.getOrNull(currentSource)?.let { if (it.feeds.isNotEmpty()) load(it, force = false) }
+                return
+            }
+            else -> Unit
         }
         currentSource = index
         sourceAdapter.selected = index
@@ -114,7 +125,7 @@ class MainActivity : AppCompatActivity() {
         search.setText("")
 
         loadJob?.cancel()
-        if (src.url == Sources.FAVORITES) {
+        if (src.special == Special.FAVORITES) {
             setChannels(favorites.all())
             if (allChannels.isEmpty()) {
                 status.text = getString(R.string.no_favorites)
@@ -131,13 +142,13 @@ class MainActivity : AppCompatActivity() {
             src.custom -> AlertDialog.Builder(this)
                 .setTitle(getString(R.string.remove_list_q, src.title))
                 .setPositiveButton(R.string.remove) { _, _ ->
-                    customSources.remove(src.url)
+                    customSources.remove(src.feeds.first().url)
                     if (currentSource == index) currentSource = -1
                     rebuildSources()
                 }
                 .setNegativeButton(R.string.cancel, null)
                 .show()
-            src.url.startsWith("http") -> {
+            src.feeds.isNotEmpty() -> {
                 currentSource = index
                 sourceAdapter.selected = index
                 titleView.text = src.title
@@ -155,7 +166,7 @@ class MainActivity : AppCompatActivity() {
         setChannels(emptyList(), updateStatus = false)
         loadJob = lifecycleScope.launch {
             try {
-                val list = repo.load(src.url, force)
+                val list = repo.loadSource(src, force, settings.hideGeoBlocked)
                 setChannels(list)
             } catch (e: CancellationException) {
                 throw e
@@ -192,7 +203,7 @@ class MainActivity : AppCompatActivity() {
                 val name = nameInput.text.toString().trim().ifBlank { "Minha lista" }
                 customSources.add("📁 $name", url)
                 rebuildSources()
-                onSourceClick(sources.indexOfFirst { it.url == url })
+                onSourceClick(sources.indexOfFirst { it.custom && it.feeds.first().url == url })
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -244,7 +255,7 @@ class MainActivity : AppCompatActivity() {
             getString(if (added) R.string.fav_added else R.string.fav_removed, ch.name),
             Toast.LENGTH_SHORT
         ).show()
-        if (sources.getOrNull(currentSource)?.url == Sources.FAVORITES) {
+        if (sources.getOrNull(currentSource)?.special == Special.FAVORITES) {
             setChannels(favorites.all())
         } else {
             channelAdapter.favoriteUrls = favorites.urls()

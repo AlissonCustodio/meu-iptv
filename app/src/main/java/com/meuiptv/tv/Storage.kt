@@ -32,17 +32,26 @@ class CustomSources(context: Context) {
         val arr = JSONArray(prefs.getString("list", "[]"))
         (0 until arr.length()).map {
             val o = arr.getJSONObject(it)
-            PlaylistSource(o.getString("title"), o.getString("url"), custom = true)
+            PlaylistSource(o.getString("title"), listOf(Feed(o.getString("url"))), custom = true)
         }
     }.getOrDefault(emptyList())
 
-    fun add(title: String, url: String) = save(all() + PlaylistSource(title, url, true))
+    fun add(title: String, url: String) =
+        save(all() + PlaylistSource(title, listOf(Feed(url)), custom = true))
 
-    fun remove(url: String) = save(all().filterNot { it.url == url })
+    fun remove(url: String) = save(all().filterNot { it.feeds.firstOrNull()?.url == url })
 
     private fun save(list: List<PlaylistSource>) {
         val arr = JSONArray()
-        list.forEach { arr.put(JSONObject().put("title", it.title).put("url", it.url)) }
+        list.forEach { arr.put(JSONObject().put("title", it.title).put("url", it.feeds.first().url)) }
         prefs.edit().putString("list", arr.toString()).apply()
     }
+}
+
+class Settings(context: Context) {
+    private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+    var hideGeoBlocked: Boolean
+        get() = prefs.getBoolean("hide_geo", false)
+        set(value) = prefs.edit().putBoolean("hide_geo", value).apply()
 }

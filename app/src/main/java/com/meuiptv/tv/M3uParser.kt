@@ -41,8 +41,8 @@ object M3uParser {
                         .ifBlank { attrs["tvg-name"].orEmpty() }
                         .ifBlank { "Sem nome" }
 
-                    val group = attrs["group-title"].orEmpty()
-                        .split(';').first().trim()
+                    val tags = attrs["group-title"].orEmpty()
+                    val group = tags.split(';').first().trim()
                         .let { if (it.isBlank() || it.equals("undefined", true)) "Outros" else it }
 
                     out += Channel(
@@ -52,6 +52,7 @@ object M3uParser {
                         group = group,
                         userAgent = ua ?: attrs["user-agent"]?.ifBlank { null },
                         referrer = ref ?: attrs["http-referrer"]?.ifBlank { null },
+                        tags = tags,
                     )
                     info = null; ua = null; ref = null
                 }
